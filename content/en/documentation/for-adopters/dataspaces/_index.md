@@ -48,7 +48,7 @@ EDC is designed as a lightweight, non-resource-intensive engine. EDC adds no ove
 
 There is no such thing as cross-dataspace communication. All data sharing takes place within a dataspace. However, that does not mean there is no such thing as dataspace *interoperability*. Let's unpack this.
 
-Consider two dataspaces, DS-1 and DS-B. It's possible for a participant P-A, a member of DS-1, to share data with P-B, a member of DS-2, under one of the following conditions:
+Consider two dataspaces, DS-1 and DS-2. It's possible for a participant P-A, a member of DS-1, to share data with P-B, a member of DS-2, under one of the following conditions:
 - P-A is also a member of DS-2, or
 - P-B is also a member of DS-1
 
