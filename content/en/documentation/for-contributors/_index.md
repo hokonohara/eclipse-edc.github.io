@@ -29,12 +29,6 @@ weight: 30
     * [6.1 Coding best practices](#61-coding-best-practices)
     * [6.2 Testing best practices](#62-testing-best-practices)
     * [6.3 Other best practices](#63-other-best-practices)
-  * [6. Further concepts](#6-further-concepts)
-    * [6.1 Autodoc](#61-autodoc)
-    * [6.2 Adapting the Gradle build](#62-adapting-the-gradle-build)
-    * [6.3 The EDC Release process](#63-the-edc-release-process)
-      * [6.3.1 Releasing "core" modules](#631-releasing-core-modules)
-      * [6.3.2 Releasing "technology" modules](#632-releasing-technology-modules)
 <!-- TOC -->
 
 ## 0. Intended audience
@@ -253,81 +247,3 @@ Detailed information about testing can be found [here](./testing.md).
 ### 6.3 Other best practices
 
 Please find general best practices and recommendations [here](./best-practices.md).
-
-## 6. Further concepts
-
-### 6.1 Autodoc
-
-In EDC there is an automated way to generate basic documentation about extensions, plug points, SPI modules and
-configuration settings. To achieve this, simply annotate respective elements directly in Java code:
-
-```java
-@Extension(value = "Some supercool extension", categories = {"category1", "category2"})
-public class SomeSupercoolExtension implements ServiceExtension {
-
-  // default value -> not required
-  @Setting(value = "Some string config property", type = "string", defaultValue = "foobar", required = false)
-  public static final String SOME_STRING_CONFIG_PROPERTY = "edc.some.supercool.string";
-
-  //no default value -> required
-  @Setting(value = "Some numeric config", type = "integer", required = true)
-  public static final String SOME_INT_CONFIG_PROPERTY = "edc.some.supercool.int";
-
-  // ...
-}
-```
-
-during compilation, the EDC build plugin generates documentation for each module as structured JSON.
-
-Detailed information about autodoc can be found [here](./autodoc.md)
-
-### 6.2 Adapting the Gradle build
-
-The EDC build process is based on Gradle and as such uses several plugins to customize the build and centralize certain
-functionality. One of these plugins has already been [discussed in the previous chapter](#62-autodoc). All of EDC's
-plugins are hosted in the [GradlePlugins repository](https://github.com/eclipse-edc/GradlePlugins).
-
-The most important plugin is the "EDC build" plugin. It consists essentially of these things:
-
-- _a plugin class_: extends `Plugin<Project>` from the Gradle API to hook into the Gradle task infrastructure
-- _extensions_: they are POJOs that are model classes for configuration.
-- _conventions_: individual mutations that are applied to the project. For example, we use conventions to add some
-  standard repositories to all projects, or to implement publishing to OSSRH and MavenCentral in a generic way.
-- _tasks_: executable Gradle tasks that perform a certain action like merging OpenAPI Specification documents.
-
-It is important to note that a Gradle build is separated in _phases_, namely _Initialization_, _Configuration_ and
-_Execution_ (see [documentation](https://docs.gradle.org/current/userguide/build_lifecycle.html)). Some of our
-_conventions_ as well as other plugins have to be applied in the _Configuration_ phase.
-
-### 6.3 The EDC Release process
-
-Generally speaking, EDC publishes `-SNAPSHOT` build artifacts to OSSRH Snapshots and release build artefacts to
-MavenCentral.
-
-We further distinguish our artifacts in "core" modules and "technology" modules. The earlier consists of the Connector,
-IdentityHub and FederatedCatalog as well as the RuntimeMetamodel and the aforementioned GradlePlugins. The latter is
-comprised up of technology-specific implementations of core SPIs, for example cloud-based object storage or `Vault`
-implementations.
-
-#### 6.3.1 Releasing "core" modules
-
-The build processes for two module classes are separated from one another. All modules in the "core" class are published
-under the same Maven group-id `org.eclipse.edc`. This makes it necessary to publish them all at the same time, because
-once publishing of an artifact of a certain group-id is completed, no artifacts with the same group-id can be published
-anymore.
-
-That means, that we cannot publish the _Connector_ repository, then the _IdentityHub_ repository and finally the
-_FederatedCatalog_ repository, because by the time we get to _IdentityHub_, the publishing of _Connector_ would already
-be complete and the publishing of _IdentityHub_ would fail.
-
-The way to get around this limitation is to merge all "core" modules into _one big root project_, where the project
-structure is synthesized and contains all "core" modules as subprojects, and to publish the entire _root project_. The
-artifact names remain unchanged.
-
-This functionality is implemented in the [Release repository](https://github.com/eclipse-edc/Release), which also
-contains GitHub Actions workflows to publish snapshots, nightly builds and release builds.
-
-#### 6.3.2 Releasing "technology" modules
-
-Building and publishing releases for "technology" modules is much simpler, because they do not have to be built together
-with any other repository. With them, we can employ a conventional build-and-publish approach.
