@@ -1,5 +1,3 @@
-module github.com/google/docsy-example
+module github.com/eclipse-edc/eclipse-edc.github.io
 
-go 1.12
-
-require github.com/google/docsy v0.10.0 // indirect
+go 1.22
